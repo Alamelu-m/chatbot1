@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot with OTP Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #chatbox {
+            width: 400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #otp-section {
+            text-align: center;
+            display: none;
+        }
+
+        p {
+            background-color: #e1e1e1;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chatbot with OTP Verification</h1>
+
+    <!-- Form to ask questions -->
+    <form id="chat-form">
+        <input type="text" id="question" placeholder="Ask your programming question..." required>
+        <button type="submit">Ask</button>
+    </form>
+
+    <!-- Chatbox to show chatbot responses -->
+    <div id="chatbox"></div>
+
+    <!-- OTP Section -->
+    <div id="otp-section">
+        <h3>Enter OTP</h3>
+        <input type="text" id="otp" placeholder="Enter OTP" required>
+        <button id="submit-otp">Submit OTP</button>
+    </div>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const chatbox = document.getElementById('chatbox');
+        const otpSection = document.getElementById('otp-section');
+        const questionInput = document.getElementById('question');
+        const otpInput = document.getElementById('otp');
+
+        let currentQuestion = '';
+
+        // Event listener for the chat form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = questionInput.value;
+            currentQuestion = question;
+
+            // Send question to the server
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question }),
+            });
+            const data = await response.json();
+
+            if (data.otpSent) {
+                otpSection.style.display = 'block'; // Show OTP section
+            }
+        });
+
+        // Event listener for OTP submission
+        document.getElementById('submit-otp').addEventListener('click', async () => {
+            const otp = otpInput.value;
+
+            // Send OTP to the server for validation
+            const response = await fetch('/validate-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ otp, question: currentQuestion }),
+            });
+            const data = await response.json();
+
+            if (data.validOtp) {
+                // Append the chatbot's response
+                chatbox.innerHTML += <p><strong>Bot:</strong> ${data.answer}</p>;
+                otpSection.style.display = 'none'; // Hide OTP section
+            } else {
+                chatbox.innerHTML += <p>Invalid OTP. Try again.</p>;
+            }
+        });
+    </script>
+</body>
+</html>
